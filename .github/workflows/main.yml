@@ -43,6 +43,12 @@ jobs:
           node-version: '18'
           cache: 'yarn'
       
+      - name: Install and Build
+        run: |
+          yarn install
+          yarn build
+          npm install
+      
       - name: Update Version in Package Files
         run: |
           jq --arg v "${{ needs.setup.outputs.build_version }}" '.version = $v' frontend/package.json > tmp && mv tmp frontend/package.json
