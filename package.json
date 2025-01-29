@@ -1,0 +1,16 @@
+{
+  "name": "nginx_proxy",
+  "version": "1.0.0",
+  "description": "<p align=\"center\"> \t<img src=\"https://nginxproxymanager.com/github.png\"> \t<br><br> \t<img src=\"https://img.shields.io/badge/version-2.12.2-green.svg?style=for-the-badge\"> \t<a href=\"https://hub.docker.com/repository/docker/jc21/nginx-proxy-manager\"> \t\t<img src=\"https://img.shields.io/docker/stars/jc21/nginx-proxy-manager.svg?style=for-the-badge\"> \t</a> \t<a href=\"https://hub.docker.com/repository/docker/jc21/nginx-proxy-manager\"> \t\t<img src=\"https://img.shields.io/docker/pulls/jc21/nginx-proxy-manager.svg?style=for-the-badge\"> \t</a> </p>",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs",
+    "test": "test"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}
