@@ -1,7 +1,6 @@
 # name of the workflow
 name: Build and Test
 
-# This workflow performs on any push or pull action recognized in any branch
 on:
   push:
     branches:
@@ -10,18 +9,10 @@ on:
     branches:
       - '**'
 
-# setting up the environmental variables 
-#image from docker "nginx-proxy-manager"
-# And the major version is set up to '2'
 env:
   IMAGE: nginx-proxy-manager
   MAJOR_VERSION: '2'
 
-# Setting up the jobs to perform first job is to setup the job
-# purpose: setup the job
-#tasks: 1. checks out the code from repository
-# 2. reads the version from .version file
-# 3. process the branch_name to create a lowercase, sanitized version
 
 jobs:
   setup:
@@ -41,61 +32,44 @@ jobs:
         run: |
           BRANCH_NAME=${{ github.head_ref || github.ref_name }}
           echo "branch_lower=$(echo $BRANCH_NAME | tr '[:upper:]' '[:lower:]' | sed 's/[\\/\\.]/-/g')" >> $GITHUB_OUTPUT
-
-# The Second job is to build the Job it follows up by setting up the job
-# Its purpose is to compiles and prepares all application components
-# key operayions:
-#   1. sets up the node js environment with yarn cache
-#   2. updates the version information in :
-#     -frontend/package.json
-#     -backend/package.json
-#     -README.md
-#   -Build three components:
-#      -frontend application
-#      -backend application
-#      -Documentation
-#   - Archives build outputs for use in subsequent jobs     
-
-
- build:
-    needs: setup
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
+build:
+  needs: setup
+  runs-on: ubuntu-latest
+  steps:
+    - uses: actions/checkout@v4
       
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '18'
-          cache: 'npm'
-      
-      - name: Cache Dependencies
-        uses: actions/cache@v3
-        with:
-          path: |
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+    - name: Cache Dependencies
+      uses: actions/cache@v3
+      with:
+        path: |
             **/node_modules
             ~/.cache/yarn
           key: ${{ runner.os }}-deps-${{ hashFiles('**/package-lock.json', '**/yarn.lock') }}
           restore-keys: |
             ${{ runner.os }}-deps-
 
-      - name: Install Dependencies
-        run: npm run install:all
+    - name: Install Dependencies
+      run: npm run install:all
       
-      - name: Update Version in Package Files
-        run: |
-          jq --arg v "${{ needs.setup.outputs.build_version }}" '.version = $v' frontend/package.json > tmp && mv tmp frontend/package.json
-          jq --arg v "${{ needs.setup.outputs.build_version }}" '.version = $v' backend/package.json > tmp && mv tmp backend/package.json
-          sed -i -E "s/(version-)[0-9]+\\.[0-9]+\\.[0-9]+(-green)/\\1${{ needs.setup.outputs.build_version }}\\2/" README.md
+    - name: Update Version in Package Files
+      run: |
+        jq --arg v "${{ needs.setup.outputs.build_version }}" '.version = $v' frontend/package.json > tmp && mv tmp frontend/package.json
+        jq --arg v "${{ needs.setup.outputs.build_version }}" '.version = $v' backend/package.json > tmp && mv tmp backend/package.json
+        sed -i -E "s/(version-)[0-9]+\\.[0-9]+\\.[0-9]+(-green)/\\1${{ needs.setup.outputs.build_version }}\\2/" README.md
       
-      - name: Build All
-        run: npm run build
+    - name: Build All
+      run: npm run build
       
-      - name: Upload Build Artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: build-artifacts
-          path: |
+    - name: Upload Build Artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: build-artifacts
+        path: |
             frontend/dist
             backend/dist
             docs/build
