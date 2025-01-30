@@ -7,5 +7,7 @@
   "devDependencies": {
     "vitepress": "^1.4.0"
   },
-  "dependencies": {}
+  "dependencies": {
+    "yarn": "^1.22.22"
+  }
 }
