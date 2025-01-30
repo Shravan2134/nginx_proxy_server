@@ -78,8 +78,18 @@ jobs:
       #   with:
       #     node-version: '18'
       #     cache: 'yarn'
-
-  
+      
+      - name : Setup node.js
+        uses: action/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'yarn'
+      
+      - name: build dependencies
+        run: |
+          npm install
+          npm ci
+          
       - name: Yarn install or build
         run: |
           # Check if yarn.lock exists
