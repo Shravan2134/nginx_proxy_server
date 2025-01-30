@@ -15,8 +15,8 @@
     "test": "npm run test:cypress",
     "test:cypress": "./scripts/ci/fulltest-cypress",
     "install:all": "npm run install:frontend && npm run install:backend && npm run install:docs",
-    "install:frontend": "cd frontend && npm install",
-    "install:backend": "cd backend && npm install",
+    "install:frontend": "cd frontend && npm install --legacy-peer-deps",
+    "install:backend": "cd backend && npm install --legacy-peer-deps",
     "install:docs": "cd docs && yarn install"
   },
   "keywords": [],

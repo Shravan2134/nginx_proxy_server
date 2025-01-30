@@ -56,7 +56,11 @@ jobs:
           ${{ runner.os }}-deps-
 
     - name: Install Dependencies
-      run: npm run install:all
+      run: |
+        # install root dependencies
+        npm install --legacy-peer-deps
+        # Run installation scripts
+        npm run install:all
       
     - name: Update Version in Package Files
       run: |
