@@ -1,5 +1,7 @@
+# name of the workflow
 name: Build and Test
 
+# This workflow performs on any push or pull action recognized in any branch
 on:
   push:
     branches:
@@ -8,9 +10,18 @@ on:
     branches:
       - '**'
 
+# setting up the environmental variables 
+#image from docker "nginx-proxy-manager"
+# And the major version is set up to '2'
 env:
   IMAGE: nginx-proxy-manager
   MAJOR_VERSION: '2'
+
+# Setting up the jobs to perform first job is to setup the job
+# purpose: setup the job
+#tasks: 1. checks out the code from repository
+# 2. reads the version from .version file
+# 3. process the branch_name to create a lowercase, sanitized version
 
 jobs:
   setup:
@@ -31,12 +42,37 @@ jobs:
           BRANCH_NAME=${{ github.head_ref || github.ref_name }}
           echo "branch_lower=$(echo $BRANCH_NAME | tr '[:upper:]' '[:lower:]' | sed 's/[\\/\\.]/-/g')" >> $GITHUB_OUTPUT
 
+# The Second job is to build the Job it follows up by setting up the job
+# Its purpose is to compiles and prepares all application components
+# key operayions:
+#   1. sets up the node js environment with yarn cache
+#   2. updates the version information in :
+#     -frontend/package.json
+#     -backend/package.json
+#     -README.md
+#   -Build three components:
+#      -frontend application
+#      -backend application
+#      -Documentation
+#   - Archives build outputs for use in subsequent jobs     
+
+
   build:
     needs: setup
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
+
+      - name: Cache Dependencies
+        uses: actions/cache@v3
+        with:
+          path: |
+            **/node_modules
+            ~/.cache/yarn
+            key: ${{ runner.os }}-deps-${{ hashFiles('**/yarn.lock') }}
+            restore-keys: |
+            ${{ runner.os }}-deps-
+              
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
@@ -75,6 +111,28 @@ jobs:
             frontend/dist
             backend/dist
             docs/build
+
+
+# TEST JOB:
+
+# Then the workflow forwards to testing job here the purpose is
+# purpose: Runs application tests across multiple database configuration
+
+# features:
+#   - uses matrix stattergy to test against three databases:
+#     -SQLite
+#     -mySQL
+#     -PostgreSQL
+#   - For each database configuration:
+#     - Downloads build artifacts
+#     - Sets up Docker BuildX
+#     - Runs Cypress tests
+#     - Captures debug logs on failure
+#     - Archives test results
+#     - Ensures clenup of Docker resources
+    
+
+            
 
   test:
     needs: [setup, build]
@@ -123,6 +181,25 @@ jobs:
         if: always()
         run: docker-compose down --remove-orphans --volumes -t 30 || true
 
+# DOCKER JOB:
+#   purpose : Build and publishes the docker images
+
+#   key operation:
+#     - Requires successful completion of setup and test jobs
+#     - sets up the docker buildx for multi-architecture builds
+#     - Aunthentication with docker HUB
+#     - Determines appropriate tags based on branch:
+#       -For master branchl:
+#         - version-specific tag
+#         - major vesion tag
+#         - Latest tag
+#       - For other branches:
+#         - Developement tag with branch name
+#     - Builds and pushes multi-architecture images for:
+#       - linux/amd64
+#       - linux/arm64      
+
+
   docker:
     needs: [setup, test]
     if: success()
@@ -156,6 +233,17 @@ jobs:
           push: true
           tags: ${{ steps.docker_tags.outputs.tags }}
 
+# DOCUMENTAL JOB:
+#   purpose : Triggers documentation updates.
+
+#   conditions:
+#     - Runs only on develop or master branches
+#     - Requires successful Docker build
+#     operations:
+#       - Triggers external documenation repository build
+#       - Requires successsful Docker build
+#       - Uses Repository dispatch event for cross-repository communication
+
   docs:
     needs: [setup, docker]
     if: success() && (github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/master')
@@ -169,6 +257,18 @@ jobs:
           event-type: build-docs
           client-payload: '{"branch": "${{ github.ref_name }}"}'
 
+# PR COMMENT JOB:
+#   purpose: Provides feedback on pull requests.
+
+#   conditions:
+#     - runs only on pull requests
+#     - Requires successful docker build
+#   Operatons:
+#     -Posts a comment on the PR with:
+#       - Docker image location
+#       - important usage notes
+#       - Warning about backup requirements
+      
   pr-comment:
     needs: [setup, docker]
     if: success() && github.event_name == 'pull_request'
@@ -194,3 +294,29 @@ jobs:
         env:
           IMAGE: ${{ env.IMAGE }}
           BRANCH_LOWER: ${{ needs.setup.outputs.branch_lower }}
+
+
+# Secret Requirements:
+#   The workflow requires these secrets to be configured:
+#     - "DOCKERHUB_USERNAME" : Docker hub authentication username
+#     - "DOCKERHUB_PASSWORD" : docker hub authentication passeord
+#     - "REPO_ACCESS_TOKEN" : Github token for triggering documentation builds
+ 
+
+# ERROR HANDLING:
+#   - Test failures capture detailed logs for debugging
+#   - Failed builds automatically clean up resources
+#   - All artifacts are preserved for investigation
+#   - Docker resources are cleaned up even if test fail
+  
+# BEST PRACTISES IMPLEMENTED:
+#   1. parallel execution when possible
+#   2. Artifact sharing between jobs
+#   3. conditinal job execution
+#   4. comprehensive error handling
+#   5. resource cleanup
+#   6. cross-platform compatibility
+#   7. Secure credentials handling
+
+    
+
