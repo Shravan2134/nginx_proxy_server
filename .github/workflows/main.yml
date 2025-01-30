@@ -38,44 +38,67 @@ jobs:
     needs: setup
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
       
-    - name: Set up Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: '18'
-        cache: 'npm'
-    - name: Cache Dependencies
-      uses: actions/cache@v3
-      with:
-        path: |
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+      
+      - name: Cache Dependencies
+        uses: actions/cache@v3
+        with:
+          path: |
             **/node_modules
-            ~/.cache/yarn
-        key: ${{ runner.os }}-deps-${{ hashFiles('**/package-lock.json', '**/yarn.lock') }}
-        restore-keys: |
-          ${{ runner.os }}-deps-
+          key: ${{ runner.os }}-deps-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-deps-
 
-    - name: Install Dependencies
-      run: |
-        # install root dependencies
-        npm install --legacy-peer-deps
-        # Run installation scripts
-        npm run install:all
+      - name: Install Root Dependencies
+        run: npm install --legacy-peer-deps
+
+      - name: Install Frontend Dependencies
+        working-directory: frontend
+        run: |
+          rm -f yarn.lock
+          npm install --legacy-peer-deps
+          
+      - name: Install Backend Dependencies
+        working-directory: backend
+        run: |
+          rm -f yarn.lock
+          npm install --legacy-peer-deps
+          
+      - name: Install Docs Dependencies
+        working-directory: docs
+        run: |
+          rm -f yarn.lock
+          npm install --legacy-peer-deps
       
-    - name: Update Version in Package Files
-      run: |
-        jq --arg v "${{ needs.setup.outputs.build_version }}" '.version = $v' frontend/package.json > tmp && mv tmp frontend/package.json
-        jq --arg v "${{ needs.setup.outputs.build_version }}" '.version = $v' backend/package.json > tmp && mv tmp backend/package.json
-        sed -i -E "s/(version-)[0-9]+\\.[0-9]+\\.[0-9]+(-green)/\\1${{ needs.setup.outputs.build_version }}\\2/" README.md
+      - name: Update Version in Package Files
+        run: |
+          jq --arg v "${{ needs.setup.outputs.build_version }}" '.version = $v' frontend/package.json > tmp && mv tmp frontend/package.json
+          jq --arg v "${{ needs.setup.outputs.build_version }}" '.version = $v' backend/package.json > tmp && mv tmp backend/package.json
+          sed -i -E "s/(version-)[0-9]+\\.[0-9]+\\.[0-9]+(-green)/\\1${{ needs.setup.outputs.build_version }}\\2/" README.md
       
-    - name: Build All
-      run: npm run build
+      - name: Build Frontend
+        working-directory: frontend
+        run: npm run build
       
-    - name: Upload Build Artifacts
-      uses: actions/upload-artifact@v4
-      with:
-        name: build-artifacts
-        path: |
+      - name: Build Backend
+        working-directory: backend
+        run: npm run build
+      
+      - name: Build Documentation
+        working-directory: docs
+        run: npm run build
+      
+      - name: Upload Build Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-artifacts
+          path: |
             frontend/dist
             backend/dist
             docs/build
