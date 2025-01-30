@@ -73,11 +73,25 @@ jobs:
             restore-keys: |
             ${{ runner.os }}-deps-
               
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '18'
-          cache: 'yarn'
+      # - name: Set up Node.js
+      #   uses: actions/setup-node@v4
+      #   with:
+      #     node-version: '18'
+      #     cache: 'yarn'
+
+  
+      - name: Yarn install or build
+        run: |
+          # Check if yarn.lock exists
+          if [ -f "yarn.lock" ]; then
+            echo "Using yarn for installation"
+            yarn install
+            yarn build
+          else
+            echo "Using npm for installation"
+            npm ci
+            npm run build
+          fi
       
       - name: Install and Build
         run: |
