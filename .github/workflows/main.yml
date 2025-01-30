@@ -32,10 +32,12 @@ jobs:
         run: |
           BRANCH_NAME=${{ github.head_ref || github.ref_name }}
           echo "branch_lower=$(echo $BRANCH_NAME | tr '[:upper:]' '[:lower:]' | sed 's/[\\/\\.]/-/g')" >> $GITHUB_OUTPUT
-build:
-  needs: setup
-  runs-on: ubuntu-latest
-  steps:
+
+           
+  build:
+    needs: setup
+    runs-on: ubuntu-latest
+    steps:
     - uses: actions/checkout@v4
       
     - name: Set up Node.js
