@@ -57,57 +57,30 @@ jobs:
 #   - Archives build outputs for use in subsequent jobs     
 
 
-  build:
+ build:
     needs: setup
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
+      
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+      
       - name: Cache Dependencies
         uses: actions/cache@v3
         with:
           path: |
             **/node_modules
             ~/.cache/yarn
-            key: ${{ runner.os }}-deps-${{ hashFiles('**/yarn.lock') }}
-            restore-keys: |
+          key: ${{ runner.os }}-deps-${{ hashFiles('**/package-lock.json', '**/yarn.lock') }}
+          restore-keys: |
             ${{ runner.os }}-deps-
-              
-      # - name: Set up Node.js
-      #   uses: actions/setup-node@v4
-      #   with:
-      #     node-version: '18'
-      #     cache: 'yarn'
-      
-      # - name : Setup node.js
-      #   uses: action/setup-node@v4
-      #   with:
-      #     node-version: '18'
-      #     cache: 'yarn'
-      
-      - name: build dependencies
-        run: |
-          npm install
-          npm ci
 
-      - name: Yarn install or build
-        run: |
-          # Check if yarn.lock exists
-          if [ -f "yarn.lock" ]; then
-            echo "Using yarn for installation"
-            yarn install
-            yarn build
-          else
-            echo "Using npm for installation"
-            npm ci
-            npm run build
-          fi
-      
-      - name: Install and Build
-        run: |
-          yarn install
-          yarn build
-          npm install
+      - name: Install Dependencies
+        run: npm run install:all
       
       - name: Update Version in Package Files
         run: |
@@ -115,17 +88,8 @@ jobs:
           jq --arg v "${{ needs.setup.outputs.build_version }}" '.version = $v' backend/package.json > tmp && mv tmp backend/package.json
           sed -i -E "s/(version-)[0-9]+\\.[0-9]+\\.[0-9]+(-green)/\\1${{ needs.setup.outputs.build_version }}\\2/" README.md
       
-      - name: Build Frontend
-        run: ./scripts/ci/frontend-build
-      
-      - name: Build Backend
-        run: ./scripts/ci/test-and-build
-      
-      - name: Build Documentation
-        working-directory: docs
-        run: |
-          yarn install
-          yarn build
+      - name: Build All
+        run: npm run build
       
       - name: Upload Build Artifacts
         uses: actions/upload-artifact@v4

@@ -8,7 +8,16 @@
     "test": "test"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "npm run build:frontend && npm run build:backend && npm run build:docs",
+    "build:frontend": "./scripts/ci/frontend-build",
+    "build:backend": "./scripts/ci/test-and-build",
+    "build:docs": "cd docs && yarn install && yarn build",
+    "test": "npm run test:cypress",
+    "test:cypress": "./scripts/ci/fulltest-cypress",
+    "install:all": "npm run install:frontend && npm run install:backend && npm run install:docs",
+    "install:frontend": "cd frontend && npm install",
+    "install:backend": "cd backend && npm install",
+    "install:docs": "cd docs && yarn install"
   },
   "keywords": [],
   "author": "",
