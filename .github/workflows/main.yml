@@ -49,9 +49,9 @@ build:
         path: |
             **/node_modules
             ~/.cache/yarn
-          key: ${{ runner.os }}-deps-${{ hashFiles('**/package-lock.json', '**/yarn.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-deps-
+        key: ${{ runner.os }}-deps-${{ hashFiles('**/package-lock.json', '**/yarn.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-deps-
 
     - name: Install Dependencies
       run: npm run install:all
