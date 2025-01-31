@@ -43,6 +43,10 @@ COPY global        /app/global
 COPY package.json /app/
 RUN yarn install && yarn cache clean
 
+
+# run the workflow to test from package.json and clean the previous cache
+
+
 # WORKDIR /app
 # RUN yarn install \
 # 	&& yarn cache clean
