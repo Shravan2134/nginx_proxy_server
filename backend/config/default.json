@@ -7,4 +7,14 @@
     "password": "npm",
     "port": 3306
   }
+,
+  "database_dev":{
+    "engine": "MYSQL",
+    "host": "localhost",
+    "port": 3309,
+    "user": "root",
+    "password": "root",
+    "database" : "testdb"
+  }
 }
+
