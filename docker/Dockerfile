@@ -40,10 +40,12 @@ EXPOSE 80 81 443
 COPY backend       /app
 COPY frontend/dist /app/frontend
 COPY global        /app/global
+COPY package.json /app/
+RUN yarn install && yarn cache clean
 
-WORKDIR /app
-RUN yarn install \
-	&& yarn cache clean
+# WORKDIR /app
+# RUN yarn install \
+# 	&& yarn cache clean
 
 # add late to limit cache-busting by modifications
 COPY docker/rootfs /
