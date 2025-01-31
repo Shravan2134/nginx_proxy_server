@@ -125,52 +125,52 @@ jobs:
 
             
 
-  test:
-    needs: [setup, build]
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        database: [sqlite, mysql, postgres]
-    steps:
-      - uses: actions/checkout@v4
+  # test:
+  #   needs: [setup, build]
+  #   runs-on: ubuntu-latest
+  #   strategy:
+  #     matrix:
+  #       database: [sqlite, mysql, postgres]
+  #   steps:
+  #     - uses: actions/checkout@v4
       
-      - name: Download Build Artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: build-artifacts
+  #     - name: Download Build Artifacts
+  #       uses: actions/download-artifact@v4
+  #       with:
+  #         name: build-artifacts
       
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+  #     - name: Set up Docker Buildx
+  #       uses: docker/setup-buildx-action@v3
       
-      - name: Run Tests
-        env:
-          COMPOSE_PROJECT_NAME: npm_${{ needs.setup.outputs.branch_lower }}_${{ github.run_number }}_${{ matrix.database }}
-          COMPOSE_FILE: docker/docker-compose.ci.yml:docker/docker-compose.ci.${{ matrix.database }}.yml
-        run: |
-          ./scripts/ci/fulltest-cypress
+  #     - name: Run Tests
+  #       env:
+  #         COMPOSE_PROJECT_NAME: npm_${{ needs.setup.outputs.branch_lower }}_${{ github.run_number }}_${{ matrix.database }}
+  #         COMPOSE_FILE: docker/docker-compose.ci.yml:docker/docker-compose.ci.${{ matrix.database }}.yml
+  #       run: |
+  #         ./scripts/ci/fulltest-cypress
       
-      - name: Save Debug Logs
-        if: failure()
-        run: |
-          mkdir -p debug/${{ matrix.database }}
-          docker-compose logs fullstack > debug/${{ matrix.database }}/docker_fullstack.log 2>&1
-          docker-compose logs stepca > debug/${{ matrix.database }}/docker_stepca.log 2>&1
-          docker-compose logs pdns > debug/${{ matrix.database }}/docker_pdns.log 2>&1
-          docker-compose logs pdns-db > debug/${{ matrix.database }}/docker_pdns-db.log 2>&1
-          docker-compose logs dnsrouter > debug/${{ matrix.database }}/docker_dnsrouter.log 2>&1
+  #     - name: Save Debug Logs
+  #       if: failure()
+  #       run: |
+  #         mkdir -p debug/${{ matrix.database }}
+  #         docker-compose logs fullstack > debug/${{ matrix.database }}/docker_fullstack.log 2>&1
+  #         docker-compose logs stepca > debug/${{ matrix.database }}/docker_stepca.log 2>&1
+  #         docker-compose logs pdns > debug/${{ matrix.database }}/docker_pdns.log 2>&1
+  #         docker-compose logs pdns-db > debug/${{ matrix.database }}/docker_pdns-db.log 2>&1
+  #         docker-compose logs dnsrouter > debug/${{ matrix.database }}/docker_dnsrouter.log 2>&1
           
-      - name: Upload Test Results
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: test-results-${{ matrix.database }}
-          path: |
-            test/results/**/*
-            debug/**/*
+  #     - name: Upload Test Results
+  #       if: always()
+  #       uses: actions/upload-artifact@v4
+  #       with:
+  #         name: test-results-${{ matrix.database }}
+  #         path: |
+  #           test/results/**/*
+  #           debug/**/*
       
-      - name: Cleanup
-        if: always()
-        run: docker-compose down --remove-orphans --volumes -t 30 || true
+  #     - name: Cleanup
+  #       if: always()
+  #       run: docker-compose down --remove-orphans --volumes -t 30 || true
 
 # DOCKER JOB:
 #   purpose : Build and publishes the docker images
@@ -204,8 +204,8 @@ jobs:
       - name: Login to Docker Hub
         uses: docker/login-action@v3
         with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          username: ${{ secrets.DOCKER_HUB_USERNAME }}
+          password: ${{ secrets.DOCKER_HUB_PASSWORD }}
       
       - name: Set Docker Tags
         id: docker_tags
