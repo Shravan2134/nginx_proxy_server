@@ -1,0 +1,40 @@
+#!/bin/bash
+
+# Check if container name is provided
+if [ -z "$1" ]; then
+    echo "Usage: $0 docker-container"
+    exit 1
+fi
+
+CONTAINER="$1"
+TIMEOUT=120  # Maximum wait time in seconds
+INTERVAL=5   # Check interval in seconds
+TIME=0
+
+while [ $TIME -lt $TIMEOUT ]; do
+    # Check container health status
+    HEALTH=$(docker inspect --format='{{.State.Health.Status}}' "$CONTAINER" 2>/dev/null)
+    
+    case $HEALTH in
+        healthy)
+            echo "$CONTAINER is healthy"
+            exit 0
+            ;;
+        unhealthy)
+            echo "$CONTAINER is unhealthy"
+            exit 1
+            ;;
+        starting)
+            echo "$CONTAINER health check is still running..."
+            ;;
+        *)
+            echo "Waiting for $CONTAINER..."
+            ;;
+    esac
+    
+    sleep $INTERVAL
+    TIME=$((TIME + INTERVAL))
+done
+
+echo "Timeout waiting for $CONTAINER to become healthy"
+exit 1

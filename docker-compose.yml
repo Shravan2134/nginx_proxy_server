@@ -1,0 +1,169 @@
+# version: '3.9'
+
+services:
+  fullstack:
+    image: jc21/fullstack-image:latest
+    environment:
+      DB_MYSQL_HOST: 'db-mysql'
+      DB_MYSQL_PORT: '3306'
+      DB_MYSQL_USER: 'npm'
+      DB_MYSQL_PASSWORD: 'npmpass'
+      DB_MYSQL_NAME: 'npm'
+
+      DB_POSTGRES_HOST: 'db-postgres'
+      DB_POSTGRES_PORT: '5432'
+      DB_POSTGRES_USER: 'npm'
+      DB_POSTGRES_PASSWORD: 'npmpass'
+      DB_POSTGRES_NAME: 'npm'
+    depends_on:
+      db-mysql:
+        condition: service_healthy  # Ensure MySQL is ready before starting
+      db-postgres:
+        condition: service_healthy  # Ensure PostgreSQL is ready before starting
+      authentik:
+        condition: service_healthy    
+    networks:
+      - fulltest
+    restart: unless-stopped
+    
+  db-mysql:
+    image: jc21/mariadb-aria
+    environment:
+      MYSQL_RANDOM_ROOT_PASSWORD: 'yes'  # More secure
+      MYSQL_DATABASE: 'npm'
+      MYSQL_USER: 'npm'
+      MYSQL_PASSWORD: 'npmpass'
+    volumes:
+      - mysql_vol:/var/lib/mysql
+    networks:
+      - fulltest
+    healthcheck:
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost" ]
+      interval: 10s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+
+  db-postgres:
+    image: postgres:latest
+    environment:
+      POSTGRES_DB: npm
+      POSTGRES_USER: npm
+      POSTGRES_PASSWORD: npmpass
+    volumes:
+      - postgres_vol:/var/lib/postgresql/data
+    networks:
+      - fulltest
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB" ]
+      interval: 10s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+
+  authentik:
+    image: ghcr.io/goauthentik/server:latest
+    environment:
+      AUTHENTIK_SECRET_KEY: "your-secret-key"
+      AUTHENTIK_POSTGRESQL__HOST: db-postgres
+      AUTHENTIK_POSTGRESQL__USER: npm
+      AUTHENTIK_POSTGRESQL__PASSWORD: npmpass
+      AUTHENTIK_POSTGRESQL__NAME: npm
+    depends_on:
+      db-postgres:
+        condition: service_healthy
+    networks:
+      - fulltest
+    restart: unless-stopped
+
+networks:
+  fulltest:
+
+volumes:
+  mysql_vol:
+  postgres_vol:
+
+
+
+# version: '3.9'
+
+# services:
+#   fullstack:
+#     image: Shravan2134/fullstack-image:latest
+#     environment:
+#       DB_MYSQL_HOST: 'db-mysql'
+#       DB_MYSQL_PORT: '3306'
+#       DB_MYSQL_USER: 'npm'
+#       DB_MYSQL_PASSWORD: 'npmpass'
+#       DB_MYSQL_NAME: 'npm'
+#     depends_on:
+#       db-mysql:
+#         condition: service_healthy  # Ensures MySQL is ready before starting
+#       db-postgres:
+#         condition: service_healthy
+#       authentik:
+#         condition: service_healthy    
+#     networks:
+#       - fulltest
+#     restart: unless-stopped
+
+#   db-mysql:
+#     image: jc21/mariadb-aria
+#     environment:
+#       MYSQL_RANDOM_ROOT_PASSWORD: 'yes'  # More secure
+#       MYSQL_DATABASE: 'npm'
+#       MYSQL_USER: 'npm'
+#       MYSQL_PASSWORD: 'npmpass'
+#     volumes:
+#       - mysql_vol:/var/lib/mysql
+#     networks:
+#       - fulltest
+#     healthcheck:  # Added to ensure MySQL is ready before use
+#       test: [ "CMD", "mysqladmin", "ping", "-h", "localhost" ]
+#       interval: 10s
+#       retries: 5
+#       start_period: 10s
+#     restart: unless-stopped
+
+# networks:
+#   fulltest:
+
+# volumes:
+#   mysql_vol:
+
+# services:
+#   db-mysql:
+#     image: jc21/mariadb-aria
+#     environment:
+#       MYSQL_DATABASE: npm
+#       MYSQL_USER: npm
+#       MYSQL_PASSWORD: npmpass
+#       MYSQL_ROOT_PASSWORD: npm
+#     networks:
+#       fulltest:
+
+#   fullstack:
+#     build:
+#       context: 
+#            ./backend  # Adjust this path as necessary
+#     environment:
+#       DB_MYSQL_HOST: db-mysql
+#       DB_MYSQL_PORT: '3306'
+#       DB_MYSQL_USER: npm
+#       DB_MYSQL_PASSWORD: npmpass
+#       DB_MYSQL_NAME: npm
+#     depends_on:
+#       db-mysql:
+#         condition: service_started
+#     healthcheck:
+#       interval: 10s
+#       test: ["CMD", "/usr/bin/check-health"]
+#       timeout: 3s
+#     networks:
+#       fulltest:
+
+# networks:
+#   fulltest:
+
+# volumes:
+#   mysql_vol: {}

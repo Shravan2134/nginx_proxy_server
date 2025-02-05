@@ -37,11 +37,20 @@ RUN /tmp/install-s6 "${TARGETPLATFORM}" && rm -f /tmp/install-s6
 
 EXPOSE 80 81 443
 
-COPY backend       /app
-COPY frontend/dist /app/frontend
-COPY global        /app/global
-COPY package.json /app/
-RUN yarn install && yarn cache clean
+COPY package.json yarn.lock /app/
+RUN yarn install --frozen-lockfile && yarn cache clean
+
+# Copy application code
+COPY backend /app/backend
+COPY frontend /app/frontend
+COPY global /app/global
+
+# COPY backend       /app
+# COPY frontend      /app
+# COPY frontend/dist /app/frontend
+# COPY global        /app/global
+# COPY package.json /app/
+# RUN yarn install && yarn cache clean
 
 
 # run the workflow to test from package.json and clean the previous cache
@@ -70,3 +79,4 @@ LABEL org.label-schema.schema-version="1.0" \
 	org.label-schema.url="https://github.com/jc21/nginx-proxy-manager" \
 	org.label-schema.vcs-url="https://github.com/jc21/nginx-proxy-manager.git" \
 	org.label-schema.cmd="docker run --rm -ti jc21/nginx-proxy-manager:latest"
+
