@@ -1,7 +1,16 @@
 # WARNING: This is a CI docker-compose file used for building and testing of the entire app, it should not be used for production.
+version: '3.9'
 services:
+  # db-mysql:
+  #   image: mysql:latest
+  #   environment:
+  #      DB_MYSQL_NAME: 'npm'
+  #      DB_MYSQL_USER: 'npm'
+  #      DB_MYSQL_PASSWORD: 'npmpass'
+       
 
   fullstack:
+    image: Shravan2134/fullstack-image:latest
     environment:
       DB_MYSQL_HOST: 'db-mysql'
       DB_MYSQL_PORT: '3306'

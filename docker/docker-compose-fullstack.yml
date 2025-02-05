@@ -1,0 +1,97 @@
+version: '3.9'
+
+networks:
+  fulltest:
+    name: npm-unknown-ci-0000
+
+services:
+  fullstack:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        BUILD_VERSION: latest
+        BUILD_COMMIT: unknown
+        BUILD_DATE: "2024-02-05"
+    environment:
+      DB_SQLITE_FILE: /data/mydb.sqlite
+      DEBUG: "true"
+      DISABLE_IPV6: "true"
+      FORCE_COLOR: 1
+      LE_SERVER: https://ca.internal/acme/acme/directory
+      PGID: 1000
+      PUID: 1000
+      REQUESTS_CA_BUNDLE: /etc/ssl/certs/NginxProxyManager.crt
+      NODE_ENV: production
+      SUPPRESS_NO_CONFIG_WARNING: 1
+      S6_BEHAVIOUR_IF_STAGE2_FAILS: 1
+    healthcheck:
+      interval: 10s
+      test:
+        - CMD
+        - /usr/bin/check-health
+      timeout: 3s
+    ports:
+      - "80:80"
+      - "81:81"
+      - "443:443"
+    networks:
+      fulltest:
+        aliases:
+          - website1.example.com
+          - website2.example.com
+          - website3.example.com
+    volumes:
+      - npm_data_ci:/data:rw
+      - npm_le_ci:/etc/letsencrypt:rw
+      - ./docker/dev/letsencrypt.ini:/etc/letsencrypt.ini:ro
+      - /etc/localtime:/etc/localtime:ro
+      - ./docker/dev/resolv.conf:/etc/resolv.conf:ro
+
+  pdns:
+    depends_on:
+      pdns-db:
+        condition: service_started
+    environment:
+      PDNS_allow_axfr_ips: 127.0.0.0/8,192.0.0.0/8,10.0.0.0/8,172.0.0.0/8
+      PDNS_api: "yes"
+      PDNS_api_key: npm
+      PDNS_default_ttl: 1500
+      PDNS_gmysql_dbname: pdns
+      PDNS_gmysql_host: pdns-db
+      PDNS_gmysql_password: pdns
+      PDNS_gmysql_port: 3306
+      PDNS_gmysql_user: pdns
+      PDNS_master: "yes"
+      PDNS_version_string: anonymous
+      PDNS_webserver: "yes"
+      PDNS_webserver-allow-from: 127.0.0.0/8,192.0.0.0/8,10.0.0.0/8,172.0.0.0/8
+      PDNS_webserver_address: 0.0.0.0
+      PDNS_webserver_password: npm
+    image: pschiffe/pdns-mysql:4.8
+    networks:
+      fulltest:
+        aliases:
+          - ns1.pdns
+          - ns2.pdns
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+
+  pdns-db:
+    environment:
+      MYSQL_DATABASE: pdns
+      MYSQL_PASSWORD: pdns
+      MYSQL_ROOT_PASSWORD: pdns
+      MYSQL_USER: pdns
+    image: mariadb
+    networks:
+      fulltest: {}
+    volumes:
+      - ./docker/dev/pdns-db.sql:/docker-entrypoint-initdb.d/01_init.sql:ro
+      - /etc/localtime:/etc/localtime:ro
+      - pdns_mysql_vol:/var/lib/mysql:rw
+
+volumes:
+  npm_data_ci: {}
+  npm_le_ci: {}
+  pdns_mysql_vol: {}
